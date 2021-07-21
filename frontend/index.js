@@ -1,113 +1,74 @@
-import {initializeBlock, useBase, useRecords, Loader, Button, Box} from '@airtable/blocks/ui';
-import React, {Fragment, useState} from 'react';
+import {
+    Button,
+    colors,
+    initializeBlock,
+    useBase,
+    useLoadable,
+    useRecordById, useRecordIds,
+    useRecords,
+    useWatchable
+} from '@airtable/blocks/ui';
+import React, { Fragment, useEffect, useState } from 'react';
+import { tryAsyncReadWrite } from './modules/TryAsyncReadWrite';
 
-// These values match the base for this example: https://airtable.com/shrBJH7LLUMD6ONIf
-const TABLE_NAME = 'Articles';
-const TITLE_FIELD_NAME = 'Title';
-const EXTRACT_FIELD_NAME = 'Extract';
-const IMAGE_FIELD_NAME = 'Image';
 
 // Airtable SDK limit: we can only update 50 records at a time. For more details, see
 // https://github.com/Airtable/blocks/blob/master/packages/sdk/docs/guide_writes.md#size-limits--rate-limits
 const MAX_RECORDS_PER_UPDATE = 50;
 
-// The API endpoint we're going to hit. For more details, see
-// https://en.wikipedia.org/api/rest_v1/#/Page%20content/get_page_summary__title_
-const API_ENDPOINT = 'https://en.wikipedia.org/api/rest_v1/page/summary';
+let addFieldAgain = true;
 
-function WikipediaEnrichmentApp() {
+function AirtableBlocksApp() {
+
+    // YOUR CODE GOES HERE
+    const [ changeDetails, setChangeDetails ] = useState('No changes yet');
+
     const base = useBase();
+    const table = base.getTableByName('App sections');
+    const queryResult = table.selectRecords();
+    const records = useRecords(table.selectRecords());
 
-    const table = base.getTableByName(TABLE_NAME);
-    const titleField = table.getFieldByName(TITLE_FIELD_NAME);
+    console.log(records);
 
-    // load the records ready to be updated
-    // we only need to load the word field - the others don't get read, only written to.
-    const records = useRecords(table, {fields: [titleField]});
+    useLoadable(queryResult);
 
-    // keep track of whether we have up update currently in progress - if there is, we want to hide
-    // the update button so you can't have two updates running at once.
-    const [isUpdateInProgress, setIsUpdateInProgress] = useState(false);
-
-    // check whether we have permission to update our records or not. Any time we do a permissions
-    // check like this, we can pass in undefined for values we don't yet know. Here, as we want to
-    // make sure we can update the summary and image fields, we make sure to include them even
-    // though we don't know the values we want to use for them yet.
-    const permissionCheck = table.checkPermissionsForUpdateRecord(undefined, {
-        [EXTRACT_FIELD_NAME]: undefined,
-        [IMAGE_FIELD_NAME]: undefined,
+    useWatchable(queryResult, 'cellValues', (model, key, details) => {
+        return setChangeDetails(
+            `${ details.fieldIds.length } field(s) in ${
+                details.recordIds.length
+            } records(s) at ${Date.now()}`
+        );
     });
 
+    console.log(typeof useEffect);
+
+    console.log(useRecordById(table, useRecordIds(table)[9]));
+
     async function onButtonClick() {
-        setIsUpdateInProgress(true);
-        const recordUpdates = await getExtractAndImageUpdatesAsync(table, titleField, records);
-        await updateRecordsInBatchesAsync(table, recordUpdates);
-        setIsUpdateInProgress(false);
+        let recordUpdates = [];
+        if (!!addFieldAgain) {
+            addFieldAgain = false;
+            recordUpdates = await tryAsyncReadWrite(table, records);
+        }
+        if (recordUpdates.length > 0) {
+            await updateRecordsInBatchesAsync(table, recordUpdates);
+        }
     }
 
-    return (
-        <Box
-            // center the button/loading spinner horizontally and vertically.
-            position="absolute"
-            top="0"
-            bottom="0"
-            left="0"
-            right="0"
-            display="flex"
-            flexDirection="column"
-            justifyContent="center"
-            alignItems="center"
-        >
-            {isUpdateInProgress ? (
-                <Loader />
-            ) : (
-                <Fragment>
-                    <Button
-                        variant="primary"
-                        onClick={onButtonClick}
-                        disabled={!permissionCheck.hasPermission}
-                        marginBottom={3}
-                    >
-                        Update summaries and images
-                    </Button>
-                    {!permissionCheck.hasPermission &&
-                        // when we don't have permission to perform the update, we want to tell the
-                        // user why. `reasonDisplayString` is a human-readable string that will
-                        // explain why the button is disabled.
-                        permissionCheck.reasonDisplayString}
-                </Fragment>
-            )}
-        </Box>
-    );
-}
-
-async function getExtractAndImageUpdatesAsync(table, titleField, records) {
-    const recordUpdates = [];
-    for (const record of records) {
-        // for each record, we take the article title and make an API request:
-        const articleTitle = record.getCellValueAsString(titleField);
-        const requestUrl = `${API_ENDPOINT}/${encodeURIComponent(articleTitle)}?redirect=true`;
-        const response = await fetch(requestUrl, {cors: true});
-        const pageSummary = await response.json();
-
-        // then, we can use the result of that API request to decide how we want to update our
-        // record. To update an attachment, you need an array of objects with a `url` property.
-        recordUpdates.push({
-            id: record.id,
-            fields: {
-                [EXTRACT_FIELD_NAME]: pageSummary.extract,
-                [IMAGE_FIELD_NAME]: pageSummary.originalimage
-                    ? [{url: pageSummary.originalimage.source}]
-                    : undefined,
-            },
-        });
-
-        // out of respect for the wikipedia API, a free public resource, we wait a short time
-        // between making requests. If you change this example to use a different API, you might
-        // not need this.
-        await delayAsync(50);
-    }
-    return recordUpdates;
+    // return <div>🦊 Hello world 🚀</div>;
+    return <div>🦊 Last change:  🚀 <br />
+        {changeDetails} <br />
+        <Fragment>
+            <Button
+                variant="primary"
+                onClick={onButtonClick}
+                marginBottom={3}
+            >
+                Update summaries and images
+            </Button>
+        </Fragment>
+        {/*<MyComponent table={table} records={records} />*/}
+    </div>;
 }
 
 async function updateRecordsInBatchesAsync(table, recordUpdates) {
@@ -118,12 +79,35 @@ async function updateRecordsInBatchesAsync(table, recordUpdates) {
         // await is used to wait for the update to finish saving to Airtable servers before
         // continuing. This means we'll stay under the rate limit for writes.
         await table.updateRecordsAsync(updateBatch);
+        console.log(recordUpdates);
         i += MAX_RECORDS_PER_UPDATE;
     }
 }
 
-function delayAsync(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+class MyComponent extends React.Component {
+    render() {
+        console.log(this.props.table);
+
+        return <div>{this.props.records.map(r => {
+            const recordElm = [];
+            const propElms = [];
+            for (const p in r) {
+                if (p in r /*&& r.hasOwnProperty(p)*/) {
+                    let property = "";
+                    if (typeof r[p] === 'object') try {
+                        property = JSON.stringify(r[p])
+                    } catch (e) {
+                        property = r[p].toString();
+                    } else {
+                        property = r[p];
+                    }
+                    propElms.push(<span>{p}: {property}<br /></span>)
+                }
+            }
+            recordElm.push(<div>{propElms}<hr /></div>)
+            return recordElm;
+        })}</div>
+    }
 }
 
-initializeBlock(() => <WikipediaEnrichmentApp />);
+initializeBlock(() => <AirtableBlocksApp/>);
