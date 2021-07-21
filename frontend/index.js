@@ -1,3 +1,7 @@
+/**
+ * This starter app is specifically designed to be used with the "Product planning" base in the free Airtable course
+ */
+
 import {
     Button,
     colors,
@@ -10,11 +14,6 @@ import {
 } from '@airtable/blocks/ui';
 import React, { Fragment, useEffect, useState } from 'react';
 import { tryAsyncReadWrite } from './modules/TryAsyncReadWrite';
-
-
-// Airtable SDK limit: we can only update 50 records at a time. For more details, see
-// https://github.com/Airtable/blocks/blob/master/packages/sdk/docs/guide_writes.md#size-limits--rate-limits
-const MAX_RECORDS_PER_UPDATE = 50;
 
 let addFieldAgain = true;
 
@@ -50,9 +49,6 @@ function AirtableBlocksApp() {
             addFieldAgain = false;
             recordUpdates = await tryAsyncReadWrite(table, records);
         }
-        if (recordUpdates.length > 0) {
-            await updateRecordsInBatchesAsync(table, recordUpdates);
-        }
     }
 
     // return <div>🦊 Hello world 🚀</div>;
@@ -69,19 +65,6 @@ function AirtableBlocksApp() {
         </Fragment>
         {/*<MyComponent table={table} records={records} />*/}
     </div>;
-}
-
-async function updateRecordsInBatchesAsync(table, recordUpdates) {
-    // Fetches & saves the updates in batches of MAX_RECORDS_PER_UPDATE to stay under size limits.
-    let i = 0;
-    while (i < recordUpdates.length) {
-        const updateBatch = recordUpdates.slice(i, i + MAX_RECORDS_PER_UPDATE);
-        // await is used to wait for the update to finish saving to Airtable servers before
-        // continuing. This means we'll stay under the rate limit for writes.
-        await table.updateRecordsAsync(updateBatch);
-        console.log(recordUpdates);
-        i += MAX_RECORDS_PER_UPDATE;
-    }
 }
 
 class MyComponent extends React.Component {

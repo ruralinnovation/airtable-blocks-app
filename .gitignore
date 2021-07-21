@@ -1,4 +1,5 @@
 *.bak
+*.block
 *.idea
 /.airtableblocksrc.json
 /build
