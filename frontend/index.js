@@ -41,7 +41,7 @@ function AirtableBlocksApp() {
 
     console.log(typeof useEffect);
 
-    console.log(useRecordById(table, useRecordIds(table)[9]));
+    console.log(useRecordById(table, useRecordIds(table)[0]));
 
     async function onButtonClick() {
         let recordUpdates = [];
