@@ -6,48 +6,48 @@ import React from "react";
 // https://github.com/Airtable/blocks/blob/master/packages/sdk/docs/guide_writes.md#size-limits--rate-limits
 const MAX_RECORDS_PER_UPDATE = 50;
 
-const FIELD_NAME = 'Facets';
+const API_ENDPOINT = 'https://en.wikipedia.org/api/rest_v1/page/summary';
+const FIELD_NAME = 'County';
+const EXTRACT_FIELD_NAME = 'Summary';
+const IMAGE_FIELD_NAME = 'Image';
 
 export async function tryAsyncReadWrite (table, records) {
     console.log(colors.RED);
     console.log(colors.YELLOW);
     console.log(colors.GREEN);
 
-    const tryNewField = await table.createFieldAsync('Status', FieldType.SINGLE_SELECT, {
-        choices: [
-            { name: 'Not started', color: 'redLight2' },
-            { name: 'In Progress', color: 'yellowLight2' },
-            { name: 'Done', color: 'greenLight2' },
-        ]
-    });
-
-    let idx = 0;
+    // const tryNewField = await table.createFieldAsync('Status', FieldType.SINGLE_SELECT, {
+    //     choices: [
+    //         { name: 'Not started', color: 'redLight2' },
+    //         { name: 'In Progress', color: 'yellowLight2' },
+    //         { name: 'Done', color: 'greenLight2' },
+    //     ]
+    // });
 
     const recordUpdates = [];
     for (const record of records) {
+        // for each record, we take the article title and make an API request:
+        const articleTitle = record.getCellValueAsString(FIELD_NAME).replace(" [", ", ").replace("]", "");
+        const requestUrl = `${API_ENDPOINT}/${encodeURIComponent(articleTitle)}?redirect=true`;
+        const response = await fetch(requestUrl, {cors: true});
+        const pageSummary = await response.json();
 
-        if (idx++ === (records.length - 1)) {
-            
-            // Update single record
-            await table.updateRecordAsync(record, {
-                [FIELD_NAME]: [
-                    { "id":"recUrwpV0sZ7g5qBW","name":"Global" }
-                ]
-            });
+        // then, we can use the result of that API request to decide how we want to update our
+        // record. To update an attachment, you need an array of objects with a `url` property.
+        recordUpdates.push({
+            id: record.id,
+            fields: {
+                [EXTRACT_FIELD_NAME]: pageSummary.extract,
+                [IMAGE_FIELD_NAME]: pageSummary.originalimage
+                    ? [{url: pageSummary.originalimage.source}]
+                    : undefined,
+            },
+        });
 
-            recordUpdates.push({
-                id: record.id,
-                fields: {
-                    [FIELD_NAME]: [
-                        { "id":"recUrwpV0sZ7g5qBW","name":"Global" }
-                    ]
-                },
-            });
-
-            console.log(record);
-
-            await delayAsync(50);
-        }
+        // out of respect for the wikipedia API, a free public resource, we wait a short time
+        // between making requests. If you change this example to use a different API, you might
+        // not need this.
+        await delayAsync(50);
     }
     
     // Update multiple records in batch
