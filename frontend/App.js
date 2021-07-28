@@ -1,8 +1,7 @@
-import React, { Fragment, Component, useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
-    Box,
-    Button, Dialog, Heading,
-    Loader, Text,
+    Box, Dialog, Heading, Text,
+    registerRecordActionDataCallback,
     useBase,
     useCursor,
     useLoadable,
@@ -11,16 +10,28 @@ import {
     useRecords, useSettingsButton,
     useWatchable
 } from '@airtable/blocks/ui';
-import { MyComponent } from './modules/MyComponent';
-import { tryAsyncReadWrite } from "./modules/TryAsyncReadWrite";
-import SettingsForm from "./SettingsForm";
 import { RecordPreviewWithDialog } from "./modules/RecordPreviewWithDialog";
+import SettingsForm from "./SettingsForm";
+import { useSettings } from "./settings";
 
 function App() {
     // YOUR CODE GOES HERE
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     useSettingsButton(() => setIsSettingsOpen(!isSettingsOpen));
 
+    const {
+        isValid,
+        settings: {isEnforced, urlTable},
+    } = useSettings();
+
+    // Caches the currently selected record and field in state. If the user
+    // selects a record and a preview appears, and then the user de-selects the
+    // record (but does not select another), the preview will remain. This is
+    // useful when, for example, the user resizes the apps pane.
+    const [selectedRecordId, setSelectedRecordId] = useState(null);
+    const [selectedFieldId, setSelectedFieldId] = useState(null);
+
+    const [recordActionErrorMessage, setRecordActionErrorMessage] = useState('');
     const [selectionDetails, setSelectionDetails] = useState('No changes yet');
     const [updateDetails, setUpdateDetails] = useState('No changes yet');
     const [mapURL, setMapURL] = useState('');
@@ -146,44 +157,63 @@ function App() {
             );
         });
 
-    // // load selected records
-    // useLoadable(cursor);
-    // // re-render whenever the list of selected records changes
-    // useWatchable(cursor, ['selectedRecordIds'], (model, key, details) => {
-    //
-    //     const selectedRecordIds = [];
-    //
-    //     for (const p in model._cursorData) {
-    //         if (model._cursorData.hasOwnProperty(p)) {
-    //             // console.log(p, ": ", model._cursorData.hasOwnProperty(p));
-    //             if (p === 'selectedRecordIdSet') {
-    //                 for (const id in model._cursorData[p]) {
-    //                     if (model._cursorData[p].hasOwnProperty(id) && !!model._cursorData[p][id]) {
-    //                         selectedRecordIds.push(id);
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-    //
-    //     return setSelectionDetails(
-    //         `${selectedRecordIds.join(', ')}`
-    //     );
-    // });
+    // Close the record action error dialog whenever settings are opened or the selected record
+    // is updated. (This means you don't have to close the modal to see the settings, or when
+    // you've opened a different record.)
+    useEffect(() => {
+        setRecordActionErrorMessage('');
+    }, [isSettingsOpen, selectedRecordId]);
 
-    //
-    // async function onButtonClick() {
-    //     setIsUpdateInProgress(true);
-    //     await tryAsyncReadWrite(table, records);
-    //     setIsUpdateInProgress(false);
-    // }
+    // Register a callback to be called whenever a record action occurs (via button field)
+    // useCallback is used to memoize the callback, to avoid having to register/unregister
+    // it unnecessarily.
+    const onRecordAction = useCallback(
+        data => {
+            // Ignore the event if settings are already open.
+            // This means we can assume settings are valid (since we force settings to be open if
+            // they are invalid).
+            if (!isSettingsOpen) {
+                if (isEnforced) {
+                    if (data.tableId === urlTable.id) {
+                        setSelectedRecordId(data.recordId);
+                    } else {
+                        // Record is from a mismatching table.
+                        setRecordActionErrorMessage(
+                            `This app is set up to preview URLs using records from the "${urlTable.name}" table, but was opened from a different table.`,
+                        );
+                    }
+                } else {
+                    // Preview is not supported in this case, as we wouldn't know what field to preview.
+                    // Show a dialog to the user instead.
+                    setRecordActionErrorMessage(
+                        'You must enable "Use a specific field for previews" to preview URLs with a button field.',
+                    );
+                }
+            }
+        },
+        [isSettingsOpen, isEnforced, urlTable],
+    );
+    useEffect(() => {
+        // Return the unsubscribe function to ensure we clean up the handler.
+        return registerRecordActionDataCallback(onRecordAction);
+    }, [onRecordAction]);
+
+    // This watch deletes the cached selectedRecordId and selectedFieldId when
+    // the user moves to a new table or view. This prevents the following
+    // scenario: User selects a record that contains a preview url. The preview appears.
+    // User switches to a different table. The preview disappears. The user
+    // switches back to the original table. Weirdly, the previously viewed preview
+    // reappears, even though no record is selected.
+    useWatchable(cursor, ['activeTableId', 'activeViewId'], () => {
+        setSelectedRecordId(null);
+        setSelectedFieldId(null);
+    });
 
     // return <div>🦊 Hello world 🚀</div>;
     return (
         <Box>
             {isSettingsOpen ? (
-                "Settings"
-                // <SettingsForm setIsSettingsOpen={setIsSettingsOpen}/>
+                <SettingsForm setIsSettingsOpen={setIsSettingsOpen}/>
             ) : (
                 // `Preview (${updateDetails}): ${mapURL}`
                 <RecordPreviewWithDialog
@@ -192,16 +222,15 @@ function App() {
                     setIsSettingsOpen={setIsSettingsOpen}
                 />
             )}<br/>
-            {"Error"}
-            {/*{recordActionErrorMessage && (*/}
-            {/*    <Dialog onClose={() => setRecordActionErrorMessage('')} maxWidth={400}>*/}
-            {/*        <Dialog.CloseButton/>*/}
-            {/*        <Heading size="small">Can&apos;t preview URL</Heading>*/}
-            {/*        <Text variant="paragraph" marginBottom={0}>*/}
-            {/*            {recordActionErrorMessage}*/}
-            {/*        </Text>*/}
-            {/*    </Dialog>*/}
-            {/*)}*/}
+            {recordActionErrorMessage && (
+                <Dialog onClose={() => setRecordActionErrorMessage('')} maxWidth={400}>
+                    <Dialog.CloseButton/>
+                    <Heading size="small">Can&apos;t preview URL</Heading>
+                    <Text variant="paragraph" marginBottom={0}>
+                        {recordActionErrorMessage}
+                    </Text>
+                </Dialog>
+            )}
         </Box>
     );
 }
