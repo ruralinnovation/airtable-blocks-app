@@ -14,6 +14,8 @@ import { RecordPreviewWithDialog } from "./modules/RecordPreviewWithDialog";
 import SettingsForm from "./SettingsForm";
 import { useSettings } from "./settings";
 
+const MAP_TOOL_URL = "https://ruralinnovation.shinyapps.io/dashboard/?geoids=";
+
 function App() {
     // YOUR CODE GOES HERE
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -80,7 +82,7 @@ function App() {
             }
         }
 
-        setMapURL("https://ruralinnovation.shinyapps.io/broadband_county_assessment_tool/?geoids=" + values(geoIDs).join(","));
+        setMapURL(MAP_TOOL_URL + values(geoIDs).join(","));
     }, []);
 
     console.log("useEffect", typeof useEffect);
@@ -150,7 +152,7 @@ function App() {
                 }
             }
 
-            setMapURL("https://ruralinnovation.shinyapps.io/broadband_county_assessment_tool/?geoids=" + values(geoIDs).join(","));
+            setMapURL(MAP_TOOL_URL + values(geoIDs).join(","));
 
             return setUpdateDetails(
                 `${(recordState !== null)? details[recordState].length : 0} records(s) updated at ${Date.now()}`
