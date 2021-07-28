@@ -6,7 +6,6 @@ import {
     useCursor,
     useLoadable,
     useRecordById,
-    useRecordIds,
     useRecords, useSettingsButton,
     useWatchable
 } from '@airtable/blocks/ui';
@@ -156,6 +155,70 @@ function App() {
 
             return setUpdateDetails(
                 `${(recordState !== null)? details[recordState].length : 0} records(s) updated at ${Date.now()}`
+            );
+        });
+
+    // load selected records
+    useLoadable(cursor);
+    // re-render whenever the list of selected records changes
+    useWatchable(cursor,
+        ['selectedRecordIds'],
+        (model, key, details) => {
+            console.log("key", key);
+            console.log("details", details);
+
+            const geoids = [];
+            const selectedRecordIds = [];
+            const table = (model._cursorData.hasOwnProperty('activeTableId'))?
+                base.getTableById(model._cursorData['activeTableId']) :
+                null;
+
+            if (table.name === 'Current Selection') {
+
+                console.log("Active Table", table);
+
+                for (const p in model._cursorData) {
+                    if (model._cursorData.hasOwnProperty(p)) {
+                        console.log(p, ": ", model._cursorData[p]);
+                        if (p === 'selectedRecordIdSet') {
+                            let idx = 0;
+                            let newRecords = [];
+                            for (const rid in model._cursorData[p]) {
+                                if (model._cursorData[p].hasOwnProperty(rid) && !!model._cursorData[p][rid]) {
+                                    const record = queryResult.getRecordById(rid);
+                                    console.log("Records in Current Selection (" + (++idx) + "): ", record);
+                                    for (const p in record) {
+                                        if (p in record && typeof record[p] === 'function') {
+                                            console.log(p + "()");
+                                        }
+                                    }
+                                    for (const f of fields) {
+                                        console.log(f.name, record.getCellValue(f));
+                                        if (record.getCellValue(f) !== null) {
+                                            if (f.name.match(/Geoid/i) !== null) {
+                                                const geoid = record.getCellValue(f)[0].value;
+                                                if (geoids.filter(id => id === geoid).length < 1) {
+                                                    geoids.push(geoid);
+                                                    console.log("Select only " + geoid);
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Reload map tool with only feature selected by cursor
+            if (geoids.length > 0) {
+                setMapURL(MAP_TOOL_URL + geoids.join(","));
+            }
+
+            return setSelectionDetails(
+                `${selectedRecordIds.join(', ')}`
             );
         });
 
