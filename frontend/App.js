@@ -13,7 +13,7 @@ import { RecordPreviewWithDialog } from "./modules/RecordPreviewWithDialog";
 import SettingsForm from "./SettingsForm";
 import { useSettings } from "./settings";
 
-const MAP_TOOL_URL = "https://ruralinnovation.shinyapps.io/dashboard/?geoids=";
+const MAP_TOOL_URL = "https://ruralinnovation.shinyapps.io/cims-map-tool/?geoids=";
 
 function App() {
     // YOUR CODE GOES HERE
@@ -50,8 +50,8 @@ function App() {
     const fields = table.fields;
     const records = useRecords(table.selectRecords());
 
-    console.log("fields", fields);
-    console.log("records", records);
+    console.log("Current Selection fields", fields);
+    console.log("Current Selection records", records);
 
     useEffect(() => {
         const geoids = values(geoIDs);
