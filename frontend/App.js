@@ -13,7 +13,19 @@ import { RecordPreviewWithDialog } from "./modules/RecordPreviewWithDialog";
 import SettingsForm from "./SettingsForm";
 import { useSettings } from "./settings";
 
-const MAP_TOOL_URL = "https://ruralinnovation.shinyapps.io/cims-map-tool/?geoids=";
+const MAP_TOOL_DOMAIN = "https://ruralinnovation.shinyapps.io"
+const MAP_TOOL_URL = MAP_TOOL_DOMAIN + "/cims-map-tool/?geoids=";
+// const MAP_TOOL_DOMAIN = "http://127.0.0.1:4321"
+// const MAP_TOOL_URL = MAP_TOOL_DOMAIN + "?geoids=";
+
+// '<META HTTP-EQUIV="Access-Control-Allow-Origin" CONTENT="http://www.example.org">'
+// Try adding meta data header to page
+var link = document.createElement('META');
+link.setAttribute("HTTP-EQUIV", "Access-Control-Allow-Origin");
+link.setAttribute("CONTENT", "https://airtable.com");
+link.content = document.location;
+document.getElementsByTagName('head')[0].appendChild(link);
+
 
 function App() {
     // YOUR CODE GOES HERE
@@ -37,6 +49,7 @@ function App() {
     const [updateDetails, setUpdateDetails] = useState('No changes yet');
     const [mapURL, setMapURL] = useState('');
     const [geoIDs, setGeoIDs] = useState({});
+    const [geoType, setGeoType] = useState('County');
 
     // keep track of whether we have up update currently in progress - if there is, we want to hide
     // the update button so you can't have two updates running at once.
@@ -81,6 +94,7 @@ function App() {
             }
         }
 
+        console.log("Update embedded URL: ", MAP_TOOL_URL + values(geoIDs).join(","))
         setMapURL(MAP_TOOL_URL + values(geoIDs).join(","));
     }, []);
 
@@ -151,6 +165,7 @@ function App() {
                 }
             }
 
+            console.log("Update embedded URL: ", MAP_TOOL_URL + values(geoIDs).join(","))
             setMapURL(MAP_TOOL_URL + values(geoIDs).join(","));
 
             return setUpdateDetails(
@@ -195,6 +210,18 @@ function App() {
                                     for (const f of fields) {
                                         console.log(f.name, record.getCellValue(f));
                                         if (record.getCellValue(f) !== null) {
+                                            if (f.name.match(/Place Geoid/i) !== null) {
+                                                const geoid = record.getCellValue(f)[0].value;
+                                                if (geoids.filter(id => id === geoid).length < 1) {
+                                                    geoids.push(geoid);
+                                                    console.log("Select only " + geoid);
+                                                }
+                                            }
+                                        }
+                                    }
+                                    for (const f of fields) {
+                                        console.log(f.name, record.getCellValue(f));
+                                        if (record.getCellValue(f) !== null) {
                                             if (f.name.match(/Geoid/i) !== null) {
                                                 const geoid = record.getCellValue(f)[0].value;
                                                 if (geoids.filter(id => id === geoid).length < 1) {
@@ -212,9 +239,18 @@ function App() {
                 }
             }
 
-            // Reload map tool with only feature selected by cursor
+            // Update URL HASH of map tool with selected GEO
             if (geoids.length > 0) {
-                setMapURL(MAP_TOOL_URL + geoids.join(","));
+                console.log("Update embedded URL: ", mapURL + "#!selectedGeo=" + values(geoIDs).join(","))
+                document.querySelectorAll('iframe').forEach(elm => {
+                    console.log("MAP WINDOW: ", typeof elm.contentWindow, elm.contentWindow);
+                    elm.contentWindow.postMessage(
+                        "#!selectedGeo=" + geoids.join(","),
+                        MAP_TOOL_DOMAIN
+                    )
+                });
+
+                // setMapURL(mapURL + "#!selectedGeo=" + geoids.join(","));
             }
 
             return setSelectionDetails(

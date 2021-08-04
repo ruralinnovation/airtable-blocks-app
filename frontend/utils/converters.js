@@ -18,6 +18,16 @@ export const converters = [
         // URL isn't for an Airtable share
         return null;
     },
+    function getLocalhostPreviewUrl(url) {
+        console.log("URL: ", url);
+        const match = url.match(/(?:localhost|127\.0\.0\.1|0\.0\.0\.0)(\:?\d*)(?:\/)?(\??[A-Za-z0-9].*)/);
+        if (match !== null) {
+            return `http://127.0.0.1${(match[1]) ? match[1] : ""}/${match[2]}`;
+        }
+
+        // URL isn't for an Airtable share
+        return null;
+    },
     function getYoutubePreviewUrl(url) {
         // Standard youtube urls, e.g. https://www.youtube.com/watch?v=KYz2wyBy3kc
         let match = url.match(/youtube\.com\/.*v=([\w-]+)(&|$)/);
