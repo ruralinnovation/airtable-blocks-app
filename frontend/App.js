@@ -58,20 +58,20 @@ function App() {
     const base = useBase();
     const cursor = useCursor();
 
-    const table = base.getTableByName('Current Selection');
-    const queryResult = table.selectRecords();
-    const fields = table.fields;
-    const records = useRecords(table.selectRecords());
+    const county_selection = base.getTableByName('County Selection');
+    const queryResult = county_selection.selectRecords();
+    const fields = county_selection.fields;
+    const records = useRecords(county_selection.selectRecords());
 
-    console.log("Current Selection fields", fields);
-    console.log("Current Selection records", records);
+    console.log("County Selection fields", fields);
+    console.log("County Selection records", records);
 
     useEffect(() => {
         const geoids = values(geoIDs);
         let idx = 0;
         for (const record of records) {
             // work with the data in the query result
-            console.log("Records in Current Selection (" + (++idx) + "): ", record);
+            console.log("Records in County Selection (" + (++idx) + "): ", record);
             for (const p in record) {
                 if (p in record && typeof record[p] === 'function') {
                     console.log(p + "()");
@@ -135,7 +135,7 @@ function App() {
                 for (const rid of details[recordState]) {
                     if (recordState === "recordIds" || recordState === "addedRecordIds") {
                         const record = queryResult.getRecordById(rid);
-                        console.log("Records in Current Selection (" + (++idx) + "): ", record);
+                        console.log("Records in County Selection (" + (++idx) + "): ", record);
                         for (const p in record) {
                             if (p in record && typeof record[p] === 'function') {
                                 console.log(p + "()");
@@ -188,7 +188,7 @@ function App() {
                 base.getTableById(model._cursorData['activeTableId']) :
                 null;
 
-            if (table.name === 'Current Selection') {
+            if (table.name === 'County Selection') {
 
                 console.log("Active Table", table);
 
@@ -201,7 +201,7 @@ function App() {
                             for (const rid in model._cursorData[p]) {
                                 if (model._cursorData[p].hasOwnProperty(rid) && !!model._cursorData[p][rid]) {
                                     const record = queryResult.getRecordById(rid);
-                                    console.log("Records in Current Selection (" + (++idx) + "): ", record);
+                                    console.log("Records in County Selection (" + (++idx) + "): ", record);
                                     for (const p in record) {
                                         if (p in record && typeof record[p] === 'function') {
                                             console.log(p + "()");
@@ -318,7 +318,7 @@ function App() {
             ) : (
                 // `Preview (${updateDetails}): ${mapURL}`
                 <RecordPreviewWithDialog
-                    activeTable={table}
+                    activeTable={county_selection}
                     url = {mapURL}
                     setIsSettingsOpen={setIsSettingsOpen}
                 />
