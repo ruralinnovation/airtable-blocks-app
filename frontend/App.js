@@ -58,51 +58,207 @@ function App() {
     const base = useBase();
     const cursor = useCursor();
 
-    const county_selection = base.getTableByName('County Selection');
-    const queryResult = county_selection.selectRecords();
-    const fields = county_selection.fields;
-    const records = useRecords(county_selection.selectRecords());
+    const countySelection = base.getTableByName('County Selection');
+    const placeSelection = base.getTableByName('Place Selection');
+    const countyQueryResult = countySelection.selectRecords();
+    const placeQueryResult = placeSelection.selectRecords();
+    const countyFields = countySelection.fields;
+    const placeFields = placeSelection.fields;
+    let countyRecords = useRecords(countySelection.selectRecords());
+    let placeRecords = useRecords(placeSelection.selectRecords());
 
-    console.log("County Selection fields", fields);
-    console.log("County Selection records", records);
+    let activeTable = base.getTableByIdIfExists(cursor.activeTableId);
+    let activeView = null;
+    //console.log("Active Table: " + activeTable.name, activeTable );
+    // console.log("Active View ID: " + cursor.activeViewId);
 
-    useEffect(() => {
-        const geoids = values(geoIDs);
-        let idx = 0;
+    async function mapCountySelection(recordPromise) {
+        const geoids = (geoType === "Place") ?
+            []:
+            values(geoIDs);
+        setGeoType('County');
+        const temp = {};
+        const records = (!!recordPromise) ?
+            (await recordPromise).records :
+            countyRecords;
+
+        console.log("Records in County Selection: ", records);
+
+        // console.log("County Selection fields", countyFields);
+        // console.log("County Selection records", countyRecords);
+
         for (const record of records) {
+            console.log(record);
             // work with the data in the query result
-            console.log("Records in County Selection (" + (++idx) + "): ", record);
-            for (const p in record) {
-                if (p in record && typeof record[p] === 'function') {
-                    console.log(p + "()");
-                }
-            }
-            for (const f of fields) {
-                console.log(f.name, record.getCellValue(f));
+            // for (const p in record) {
+            //     if (p in record && typeof record[p] === 'function') {
+            //         // console.log(p + "()");
+            //     }
+            // }
+            for (const f of countyFields) {
+                // console.log(f.name, record.getCellValue(f));
                 if (record.getCellValue(f) !== null) {
-                    if (f.name.match(/Geoid/i) !== null) {
+                    if (f.name.match(/County Geoid/i) !== null) {
                         const geoid = record.getCellValue(f)[0].value;
                         if (geoids.filter(id => geoid === id).length < 1) {
-                            const temp = geoIDs;
+                            geoids.push(geoid);
                             temp[record.id] = geoid;
                             console.log("Add " + geoid, temp);
                             setGeoIDs(temp);
-                            console.log("GEOIDS: ", geoIDs);
                         }
                     }
                 }
             }
         }
 
-        console.log("Update embedded URL: ", MAP_TOOL_URL + values(geoIDs).join(","))
-        setMapURL(MAP_TOOL_URL + values(geoIDs).join(","));
+        if (typeof records.unloadData === 'function') {
+            records.unloadData();
+        }
+
+        console.log("Update embedded URL: ", MAP_TOOL_URL + geoids.join(","))
+        setMapURL(MAP_TOOL_URL + geoids.join(","));
+    }
+
+    async function mapPlaceSelection(recordPromise) {
+        const geoids = (geoType === "County") ?
+            []:
+            values(geoIDs);
+        setGeoType('Place');
+        const temp = {};
+        const records = (!!recordPromise) ?
+            (await recordPromise).records :
+            countyRecords;
+
+        // console.log("Place Selection fields", placeFields);
+        // console.log("Place Selection records", placeRecords);
+
+        for (const record of placeRecords) {
+            console.log(record);
+            // work with the data in the query result
+            // console.log("Records in County Selection (" + (++idx) + "): ", record);
+            // for (const p in record) {
+            //     if (p in record && typeof record[p] === 'function') {
+            //         // console.log(p + "()");
+            //     }
+            // }
+            for (const f of placeFields) {
+                // console.log(f.name, record.getCellValue(f));
+                if (record.getCellValue(f) !== null) {
+                    if (f.name.match(/Place Geoid/i) !== null) {
+                        const geoid = record.getCellValue(f)[0].value;
+                        if (geoids.filter(id => geoid === id).length < 1) {
+                            geoids.push(geoid);
+                            temp[record.id] = geoid;
+                            console.log("Add " + geoid, temp);
+                            setGeoIDs(temp);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (typeof records.unloadData === 'function') {
+            records.unloadData();
+        }
+
+        console.log("Update embedded URL: ", MAP_TOOL_URL + geoids.join(","))
+        setMapURL(MAP_TOOL_URL + geoids.join(","));
+    }
+
+    useEffect(() => {
+
+        activeTable = base.getTableByIdIfExists(cursor.activeTableId);
+        // console.log("Active Table: " + activeTable.name, activeTable );
+        for (const view of activeTable.views) {
+            if (view.id === cursor.activeViewId) {
+                if (activeTable.name === 'County Selection') {
+                    activeView = view;
+
+                } else if (activeTable.name === 'Place Selection') {
+                    activeView = view;
+
+                }
+            }
+        }
+
+        if (activeView !== null) {
+            console.log("View: " + activeView.name);
+            console.log("Active: " + (activeView.id === cursor.activeViewId));
+
+            if (activeTable.name === 'County Selection') {
+                mapCountySelection(activeView.selectRecordsAsync());
+
+            } else if (activeTable.name === 'Place Selection') {
+                mapPlaceSelection(activeView.selectRecordsAsync());
+
+            }
+        } else {
+            if (activeTable.name === 'County Selection') {
+                mapCountySelection();
+
+            } else if (activeTable.name === 'Place Selection') {
+                mapPlaceSelection();
+
+            } else {
+                console.log("Default to County Selection")
+                mapCountySelection();
+            }
+        }
+
     }, []);
 
-    console.log("useEffect", typeof useEffect);
-    console.log("useRecordById", typeof useRecordById);
+    // This watch deletes the cached selectedRecordId and selectedFieldId when
+    // the user moves to a new table or view. This prevents the following
+    // scenario: User selects a record that contains a preview url. The preview appears.
+    // User switches to a different table. The preview disappears. The user
+    // switches back to the original table. Weirdly, the previously viewed preview
+    // reappears, even though no record is selected.
+    useWatchable(cursor, ['activeTableId', 'activeViewId'], () => {
 
-    useLoadable(queryResult);
-    useWatchable(queryResult,
+        activeTable = base.getTableByIdIfExists(cursor.activeTableId);
+        console.log("Active Table: " + activeTable.name, activeTable );
+        for (const view of activeTable.views) {
+            if (view.id === cursor.activeViewId) {
+                if (activeTable.name === 'County Selection') {
+                    activeView = view;
+
+                } else if (activeTable.name === 'Place Selection') {
+                    activeView = view;
+
+                }
+            }
+        }
+
+        if (activeView !== null) {
+            console.log("View: " + activeView.name);
+            console.log("Active: " + (activeView.id === cursor.activeViewId));
+
+            if (activeTable.name === 'County Selection') {
+                mapCountySelection(activeView.selectRecordsAsync());
+
+            } else if (activeTable.name === 'Place Selection') {
+                mapPlaceSelection(activeView.selectRecordsAsync());
+
+            }
+        } else {
+            if (activeTable.name === 'County Selection') {
+                mapCountySelection();
+
+            } else if (activeTable.name === 'Place Selection') {
+                mapPlaceSelection();
+
+            } else {
+                setSelectedRecordId(null);
+                setSelectedFieldId(null);
+            }
+        }
+    });
+
+    // console.log("useEffect", typeof useEffect);
+    // console.log("useRecordById", typeof useRecordById);
+
+    useLoadable(countyQueryResult);
+    useWatchable(countyQueryResult,
         ['cellValues', 'records'],
         (model, key, details) => {
             for (const p in model) {
@@ -134,17 +290,89 @@ function App() {
                 const geoids = values(geoIDs);
                 for (const rid of details[recordState]) {
                     if (recordState === "recordIds" || recordState === "addedRecordIds") {
-                        const record = queryResult.getRecordById(rid);
+                        const record = countyQueryResult.getRecordById(rid);
                         console.log("Records in County Selection (" + (++idx) + "): ", record);
                         for (const p in record) {
                             if (p in record && typeof record[p] === 'function') {
                                 console.log(p + "()");
                             }
                         }
-                        for (const f of fields) {
+                        for (const f of countyFields) {
                             console.log(f.name, record.getCellValue(f));
                             if (record.getCellValue(f) !== null) {
                                 if (f.name.match(/Geoid/i) !== null) {
+                                    const geoid = record.getCellValue(f)[0].value;
+                                    if (geoids.filter(id => id === geoid).length < 1) {
+                                        const temp = geoIDs;
+                                        temp[record.id] = geoid;
+                                        console.log("Add " + geoid, temp);
+                                        setGeoIDs(temp);
+                                        console.log("GEOIDS: ", geoIDs);
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        const temp = geoIDs;
+                        delete temp[rid];
+                        setGeoIDs(temp);
+                        console.log("GEOIDS: ", geoIDs);
+                    }
+                }
+            }
+
+            console.log("Update embedded URL: ", MAP_TOOL_URL + values(geoIDs).join(","))
+            setMapURL(MAP_TOOL_URL + values(geoIDs).join(","));
+
+            return setUpdateDetails(
+                `${(recordState !== null)? details[recordState].length : 0} records(s) updated at ${Date.now()}`
+            );
+        });
+
+    useLoadable(placeQueryResult);
+    useWatchable(placeQueryResult,
+        ['cellValues', 'records'],
+        (model, key, details) => {
+            for (const p in model) {
+                if (model.hasOwnProperty(p)) {
+                    console.log(p, ": ", model[p]);
+                    // if (p === 'selectedRecordIdSet') {
+                    //     for (const id in model[p]) {
+                    //         if (model[p].hasOwnProperty(id) && !!model[p][id]) {
+                    //             selectedRecordIds.push(id);
+                    //         }
+                    //     }
+                    // }
+                }
+            }
+
+            console.log("key", key);
+            console.log("details", details);
+
+            const recordState = (details.hasOwnProperty("recordIds"))?
+                "recordIds" :
+                (details.hasOwnProperty("addedRecordIds") && details["addedRecordIds"].length > 0)?
+                    "addedRecordIds" :
+                (details.hasOwnProperty("removedRecordIds") && details["removedRecordIds"].length > 0)?
+                    "removedRecordIds" :
+                    null;
+
+            if (recordState !== null) {
+                let idx = 0;
+                const geoids = values(geoIDs);
+                for (const rid of details[recordState]) {
+                    if (recordState === "recordIds" || recordState === "addedRecordIds") {
+                        const record = placeQueryResult.getRecordById(rid);
+                        console.log("Records in Place Selection (" + (++idx) + "): ", record);
+                        for (const p in record) {
+                            if (p in record && typeof record[p] === 'function') {
+                                console.log(p + "()");
+                            }
+                        }
+                        for (const f of placeFields) {
+                            console.log(f.name, record.getCellValue(f));
+                            if (record.getCellValue(f) !== null) {
+                                if (f.name.match(/Place Geoid/i) !== null) {
                                     const geoid = record.getCellValue(f)[0].value;
                                     if (geoids.filter(id => id === geoid).length < 1) {
                                         const temp = geoIDs;
@@ -190,7 +418,7 @@ function App() {
 
             if (table.name === 'County Selection') {
 
-                console.log("Active Table", table);
+                console.log("Active Table " + table.name, table);
 
                 for (const p in model._cursorData) {
                     if (model._cursorData.hasOwnProperty(p)) {
@@ -200,17 +428,17 @@ function App() {
                             let newRecords = [];
                             for (const rid in model._cursorData[p]) {
                                 if (model._cursorData[p].hasOwnProperty(rid) && !!model._cursorData[p][rid]) {
-                                    const record = queryResult.getRecordById(rid);
+                                    const record = countyQueryResult.getRecordById(rid);
                                     console.log("Records in County Selection (" + (++idx) + "): ", record);
                                     for (const p in record) {
                                         if (p in record && typeof record[p] === 'function') {
                                             console.log(p + "()");
                                         }
                                     }
-                                    for (const f of fields) {
+                                    for (const f of countyFields) {
                                         console.log(f.name, record.getCellValue(f));
                                         if (record.getCellValue(f) !== null) {
-                                            if (f.name.match(/Place Geoid/i) !== null) {
+                                            if (f.name.match(/County Geoid/i) !== null) {
                                                 const geoid = record.getCellValue(f)[0].value;
                                                 if (geoids.filter(id => id === geoid).length < 1) {
                                                     geoids.push(geoid);
@@ -219,10 +447,36 @@ function App() {
                                             }
                                         }
                                     }
-                                    for (const f of fields) {
+
+                                }
+                            }
+                        }
+                    }
+                }
+
+            } else if (table.name === 'Place Selection') {
+
+                console.log("Active Table " + table.name, table);
+
+                for (const p in model._cursorData) {
+                    if (model._cursorData.hasOwnProperty(p)) {
+                        console.log(p, ": ", model._cursorData[p]);
+                        if (p === 'selectedRecordIdSet') {
+                            let idx = 0;
+                            let newRecords = [];
+                            for (const rid in model._cursorData[p]) {
+                                if (model._cursorData[p].hasOwnProperty(rid) && !!model._cursorData[p][rid]) {
+                                    const record = placeQueryResult.getRecordById(rid);
+                                    console.log("Records in Place Selection (" + (++idx) + "): ", record);
+                                    for (const p in record) {
+                                        if (p in record && typeof record[p] === 'function') {
+                                            console.log(p + "()");
+                                        }
+                                    }
+                                    for (const f of placeFields) {
                                         console.log(f.name, record.getCellValue(f));
                                         if (record.getCellValue(f) !== null) {
-                                            if (f.name.match(/Geoid/i) !== null) {
+                                            if (f.name.match(/Place Geoid/i) !== null) {
                                                 const geoid = record.getCellValue(f)[0].value;
                                                 if (geoids.filter(id => id === geoid).length < 1) {
                                                     geoids.push(geoid);
@@ -249,8 +503,6 @@ function App() {
                         MAP_TOOL_DOMAIN
                     )
                 });
-
-                // setMapURL(mapURL + "#!selectedGeo=" + geoids.join(","));
             }
 
             return setSelectionDetails(
@@ -299,30 +551,21 @@ function App() {
         return registerRecordActionDataCallback(onRecordAction);
     }, [onRecordAction]);
 
-    // This watch deletes the cached selectedRecordId and selectedFieldId when
-    // the user moves to a new table or view. This prevents the following
-    // scenario: User selects a record that contains a preview url. The preview appears.
-    // User switches to a different table. The preview disappears. The user
-    // switches back to the original table. Weirdly, the previously viewed preview
-    // reappears, even though no record is selected.
-    useWatchable(cursor, ['activeTableId', 'activeViewId'], () => {
-        setSelectedRecordId(null);
-        setSelectedFieldId(null);
-    });
-
     // return <div>🦊 Hello world 🚀</div>;
     return (
         <Box>
+            {/*Active table: {cursor.activeTableId} <br />*/}
             {isSettingsOpen ? (
                 <SettingsForm setIsSettingsOpen={setIsSettingsOpen}/>
             ) : (
                 // `Preview (${updateDetails}): ${mapURL}`
                 <RecordPreviewWithDialog
-                    activeTable={county_selection}
+                    activeTable={activeTable}
                     url = {mapURL}
                     setIsSettingsOpen={setIsSettingsOpen}
                 />
-            )}<br/>
+            )}
+            <br/>
             {recordActionErrorMessage && (
                 <Dialog onClose={() => setRecordActionErrorMessage('')} maxWidth={400}>
                     <Dialog.CloseButton/>
