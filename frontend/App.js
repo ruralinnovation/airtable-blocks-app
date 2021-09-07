@@ -15,11 +15,18 @@ import { useSettings } from "./settings";
 
 // '<META HTTP-EQUIV="Access-Control-Allow-Origin" CONTENT="http://www.example.org">'
 // Try adding meta data header to page
-var link = document.createElement('META');
-link.setAttribute("HTTP-EQUIV", "Access-Control-Allow-Origin");
-link.setAttribute("CONTENT", "https://airtable.com");
-link.content = document.location;
-document.getElementsByTagName('head')[0].appendChild(link);
+const links = [
+    "https://airtable.com",
+    "https://*.airtable.com",
+    "https://*.airtableblocks.com"
+]
+for (const l of links) {
+    const link = document.createElement('META');
+    link.setAttribute("CONTENT", l);
+    link.setAttribute("HTTP-EQUIV", "Access-Control-Allow-Origin");
+    link.content = document.location;
+    document.getElementsByTagName('head')[0].appendChild(link);
+}
 
 const MAP_TOOL_DOMAIN = "https://ruralinnovation.shinyapps.io"
 const MAP_TOOL_URL = MAP_TOOL_DOMAIN + "/cims-map-tool/?geoids=";
@@ -53,6 +60,7 @@ function App() {
     const [mapURL, setMapURL] = useState('');
     const [geoIDs, setGeoIDs] = useState({});
     const [geoType, setGeoType] = useState('County');
+    const [totalSelectedRecords, setTotalSelectedRecords] = useState(0);
 
     // keep track of whether we have up update currently in progress - if there is, we want to hide
     // the update button so you can't have two updates running at once.
@@ -94,6 +102,8 @@ function App() {
         // console.log("Selected Counties fields", countyFields);
         // console.log("Selected Counties records", countyRecords);
 
+        let total = 0; setTotalSelectedRecords(total);
+
         for (const record of records) {
             // console.log(record);
             // work with the data in the query result
@@ -112,6 +122,8 @@ function App() {
                             temp[record.id] = geoid;
                             // console.log("Add " + geoid, temp);
                             setGeoIDs(temp);
+                            setTotalSelectedRecords(++total);
+                            console.log(total);
                         }
                     }
                 }
@@ -140,6 +152,7 @@ function App() {
 
         // console.log("Selected Counties fields", countyFields);
         // console.log("Selected Counties records", countyRecords);
+        let total = 0; setTotalSelectedRecords(total);
 
         for (const record of records) {
             console.log(record);
@@ -159,6 +172,8 @@ function App() {
                             temp[record.id] = geoid;
                             console.log("Add " + geoid, temp);
                             setGeoIDs(temp);
+                            setTotalSelectedRecords(++total);
+                            console.log(total);
                         }
                     }
                 }
@@ -181,10 +196,14 @@ function App() {
         const temp = {};
         const records = (!!recordPromise) ?
             (await recordPromise).records :
-            selectedCountyRecords;
+            placeRecords;
 
         // console.log("Selected Places fields", placeFields);
         // console.log("Selected Places records", placeRecords);
+
+        let total = 0; setTotalSelectedRecords(total);
+
+        console.log(records);
 
         for (const record of placeRecords) {
             console.log(record);
@@ -198,13 +217,15 @@ function App() {
             for (const f of placeFields) {
                 // console.log(f.name, record.getCellValue(f));
                 if (record.getCellValue(f) !== null) {
-                    if (f.name.match(/GEOID/i) !== null) {
+                    if (f.name.match(/GEOID$/) !== null) {
                         const geoid = record.getCellValue(f)[0].value;
                         if (geoids.filter(id => geoid === id).length < 1) {
                             geoids.push(geoid);
                             temp[record.id] = geoid;
                             console.log("Add " + geoid, temp);
                             setGeoIDs(temp);
+                            // setTotalSelectedRecords(++total);
+                            console.log(++total);
                         }
                     }
                 }
@@ -349,6 +370,8 @@ function App() {
             console.log("key", key);
             console.log("details", details);
 
+            let total = 0; setTotalSelectedRecords(total);
+
             const recordState = (details.hasOwnProperty("recordIds"))?
                 "recordIds" :
                 (details.hasOwnProperty("addedRecordIds") && details["addedRecordIds"].length > 0)?
@@ -388,6 +411,8 @@ function App() {
                         const temp = geoIDs;
                         delete temp[rid];
                         setGeoIDs(temp);
+                        setTotalSelectedRecords(++total);
+                            console.log(total);
                         console.log("GEOIDS: ", geoIDs);
                     }
                 }
@@ -429,6 +454,8 @@ function App() {
                     "removedRecordIds" :
                     null;
 
+            let total = 0; setTotalSelectedRecords(total);
+
             if (recordState !== null) {
                 let idx = 0;
                 const geoids = values(geoIDs);
@@ -451,6 +478,8 @@ function App() {
                                         temp[record.id] = geoid;
                                         console.log("Add " + geoid, temp);
                                         setGeoIDs(temp);
+                                        setTotalSelectedRecords(++total);
+                            console.log(total);
                                         console.log("GEOIDS: ", geoIDs);
                                     }
                                 }
@@ -493,6 +522,8 @@ function App() {
             console.log("key", key);
             console.log("details", details);
 
+            let total = 0; setTotalSelectedRecords(total);
+
             const recordState = (details.hasOwnProperty("recordIds"))?
                 "recordIds" :
                 (details.hasOwnProperty("addedRecordIds") && details["addedRecordIds"].length > 0)?
@@ -532,6 +563,8 @@ function App() {
                         const temp = geoIDs;
                         delete temp[rid];
                         setGeoIDs(temp);
+                        setTotalSelectedRecords(++total);
+                            console.log(total);
                         console.log("GEOIDS: ", geoIDs);
                     }
                 }
@@ -739,14 +772,17 @@ function App() {
             {/*Active table: {cursor.activeTableId} <br />*/}
             {isSettingsOpen ? (
                 <SettingsForm setIsSettingsOpen={setIsSettingsOpen}/>
-            ) : (
-                // `Preview (${updateDetails}): ${mapURL}`
-                <RecordPreviewWithDialog
-                    activeTable={activeTable}
-                    url = {mapURL}
-                    setIsSettingsOpen={setIsSettingsOpen}
-                />
-            )}
+            ) : (totalSelectedRecords > 100) ? (
+                    <div><h3>To map records in the current view, you must filter the view to less than 100 records ({totalSelectedRecords}).</h3></div>
+                ) : (
+                    // `Preview (${updateDetails}): ${mapURL}`
+                    <RecordPreviewWithDialog
+                        activeTable={activeTable}
+                        url = {mapURL}
+                        setIsSettingsOpen={setIsSettingsOpen}
+                    />
+                )
+            }
             <br/>
             {recordActionErrorMessage && (
                 <Dialog onClose={() => setRecordActionErrorMessage('')} maxWidth={400}>

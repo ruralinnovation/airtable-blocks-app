@@ -52,6 +52,7 @@ export async function tryAsyncReadWrite (table, records) {
     
     // Update multiple records in batch
     if (recordUpdates.length > 0) {
+        console.log("SEND SELECTED RECORDS TO UPDATE FUNCTION");
         await updateRecordsInBatchesAsync(table, recordUpdates);
     }
 
@@ -62,6 +63,7 @@ async function updateRecordsInBatchesAsync(table, recordUpdates) {
     // Fetches & saves the updates in batches of MAX_RECORDS_PER_UPDATE to stay under size limits.
     let i = 0;
     while (i < recordUpdates.length) {
+        console.log(`SELECT RECORDS ${i} - ${i + MAX_RECORDS_PER_UPDATE}`);
         const updateBatch = recordUpdates.slice(i, i + MAX_RECORDS_PER_UPDATE);
         // await is used to wait for the update to finish saving to Airtable servers before
         // continuing. This means we'll stay under the rate limit for writes.
