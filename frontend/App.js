@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, Fragment } from 'react';
 import {
     Box, Dialog, Heading, Text,
     registerRecordActionDataCallback,
@@ -27,6 +27,8 @@ for (const l of links) {
     link.content = document.location;
     document.getElementsByTagName('head')[0].appendChild(link);
 }
+
+const MAX_RECORDS_TO_MAP = 300;
 
 const MAP_TOOL_DOMAIN = "https://ruralinnovation.shinyapps.io"
 const MAP_TOOL_URL = MAP_TOOL_DOMAIN + "/cims-map-tool/?geoids=";
@@ -172,8 +174,8 @@ function App() {
                             temp[record.id] = geoid;
                             console.log("Add " + geoid, temp);
                             setGeoIDs(temp);
-                            setTotalSelectedRecords(++total);
-                            console.log(total);
+                            // setTotalSelectedRecords(++total);
+                            // console.log(total);
                         }
                     }
                 }
@@ -224,8 +226,8 @@ function App() {
                             temp[record.id] = geoid;
                             console.log("Add " + geoid, temp);
                             setGeoIDs(temp);
-                            // setTotalSelectedRecords(++total);
-                            console.log(++total);
+                            setTotalSelectedRecords(++total);
+                            console.log(total);
                         }
                     }
                 }
@@ -411,8 +413,8 @@ function App() {
                         const temp = geoIDs;
                         delete temp[rid];
                         setGeoIDs(temp);
-                        setTotalSelectedRecords(++total);
-                            console.log(total);
+                        // setTotalSelectedRecords(++total);
+                        // console.log(total);
                         console.log("GEOIDS: ", geoIDs);
                     }
                 }
@@ -563,8 +565,8 @@ function App() {
                         const temp = geoIDs;
                         delete temp[rid];
                         setGeoIDs(temp);
-                        setTotalSelectedRecords(++total);
-                            console.log(total);
+                        // setTotalSelectedRecords(++total);
+                        // console.log(total);
                         console.log("GEOIDS: ", geoIDs);
                     }
                 }
@@ -772,8 +774,10 @@ function App() {
             {/*Active table: {cursor.activeTableId} <br />*/}
             {isSettingsOpen ? (
                 <SettingsForm setIsSettingsOpen={setIsSettingsOpen}/>
-            ) : (totalSelectedRecords > 100) ? (
-                    <div><h3>To map records in the current view, you must filter the view to less than 100 records ({totalSelectedRecords}).</h3></div>
+            ) : (totalSelectedRecords > MAX_RECORDS_TO_MAP) ? (
+                    <Fragment>
+                        <Text>To map records in the current view, you must filter the view to less than {MAX_RECORDS_TO_MAP} records ({totalSelectedRecords}).</Text>
+                    </Fragment>
                 ) : (
                     // `Preview (${updateDetails}): ${mapURL}`
                     <RecordPreviewWithDialog

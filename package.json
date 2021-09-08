@@ -10,6 +10,8 @@
         "eslint-plugin-react-hooks": "^2.0.1"
     },
     "scripts": {
+        "release": "block release",
+        "run": "block run",
         "lint": "eslint frontend"
     }
 }
