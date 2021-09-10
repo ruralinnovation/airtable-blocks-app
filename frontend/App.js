@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, Fragment } from 'react';
 import {
-    Box, Dialog, Heading, Text,
+    Box, Dialog, Heading, Loader, Text,
     registerRecordActionDataCallback,
     useBase,
     useCursor,
@@ -12,6 +12,7 @@ import {
 import { RecordPreviewWithDialog } from "./modules/RecordPreviewWithDialog";
 import SettingsForm from "./SettingsForm";
 import { useSettings } from "./settings";
+import {  } from "@airtable/blocks/ui";
 
 // '<META HTTP-EQUIV="Access-Control-Allow-Origin" CONTENT="http://www.example.org">'
 // Try adding meta data header to page
@@ -41,6 +42,7 @@ const SELECTED_PLACES_TABLE = 'Selected Places';
 
 function App() {
     // YOUR CODE GOES HERE
+    const [isLoading, setIsLoading] = useState(true);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     useSettingsButton(() => setIsSettingsOpen(!isSettingsOpen));
 
@@ -89,9 +91,9 @@ function App() {
     //console.log("Active Table: " + activeTable.name, activeTable );
     // console.log("Active View ID: " + cursor.activeViewId);
 
-    async function mapCounties(recordPromise) {
+    async function mapCounties(recordPromise, geoIdUpdate) {
         const geoids = (geoType === "Place") ?
-            []:
+            [] : (!!geoIdUpdate) ? values(geoIdUpdate) :
             values(geoIDs);
         setGeoType('County');
         const temp = {};
@@ -99,25 +101,19 @@ function App() {
             (await recordPromise).records :
             countyRecords;
 
-        console.log("Records in Counties: ", records);
+        // console.log("Counties fields", countyFields);
+        // console.log("Counties records", countyRecords);
 
-        // console.log("Selected Counties fields", countyFields);
-        // console.log("Selected Counties records", countyRecords);
+        let total = (!!geoids && geoids !== null) ? geoids.length : 0;
+        setTotalSelectedRecords(total);
 
-        let total = 0; setTotalSelectedRecords(total);
+        setIsLoading(true);
 
         for (const record of records) {
-            // console.log(record);
-            // work with the data in the query result
-            // for (const p in record) {
-            //     if (p in record && typeof record[p] === 'function') {
-            //         // console.log(p + "()");
-            //     }
-            // }
             for (const f of countyFields) {
                 if (record.getCellValue(f) !== null) {
                     if (f.name.match(/Geoid/i) !== null) {
-                        console.log(f.name, record.getCellValue(f));
+                        // console.log(f.name, record.getCellValue(f));
                         const geoid = record.getCellValue(f)[0].value || record.getCellValue(f);
                         if (geoids.filter(id => geoid === id).length < 1) {
                             geoids.push(geoid);
@@ -125,56 +121,6 @@ function App() {
                             // console.log("Add " + geoid, temp);
                             setGeoIDs(temp);
                             setTotalSelectedRecords(++total);
-                            console.log(total);
-                        }
-                    }
-                }
-            }
-        }
-
-        if (typeof records.unloadData === 'function') {
-            records.unloadData();
-        }
-
-        console.log("Update embedded URL: ", MAP_TOOL_URL + geoids.join(","))
-        setMapURL(MAP_TOOL_URL + geoids.join(","));
-    }
-
-    async function mapCountySelection(recordPromise) {
-        const geoids = (geoType === "Place") ?
-            []:
-            values(geoIDs);
-        setGeoType('County');
-        const temp = {};
-        const records = (!!recordPromise) ?
-            (await recordPromise).records :
-            selectedCountyRecords;
-
-        console.log("Records in Selected Counties: ", records);
-
-        // console.log("Selected Counties fields", countyFields);
-        // console.log("Selected Counties records", countyRecords);
-        let total = 0; setTotalSelectedRecords(total);
-
-        for (const record of records) {
-            console.log(record);
-            // work with the data in the query result
-            // for (const p in record) {
-            //     if (p in record && typeof record[p] === 'function') {
-            //         // console.log(p + "()");
-            //     }
-            // }
-            for (const f of selectedCountyFields) {
-                // console.log(f.name, record.getCellValue(f));
-                if (record.getCellValue(f) !== null) {
-                    if (f.name.match(/Geoid/i) !== null) {
-                        const geoid = record.getCellValue(f)[0].value;
-                        if (geoids.filter(id => geoid === id).length < 1) {
-                            geoids.push(geoid);
-                            temp[record.id] = geoid;
-                            console.log("Add " + geoid, temp);
-                            setGeoIDs(temp);
-                            // setTotalSelectedRecords(++total);
                             // console.log(total);
                         }
                     }
@@ -186,48 +132,45 @@ function App() {
             records.unloadData();
         }
 
-        console.log("Update embedded URL: ", MAP_TOOL_URL + geoids.join(","))
-        setMapURL(MAP_TOOL_URL + geoids.join(","));
+        if (total <= MAX_RECORDS_TO_MAP) {
+            console.log("Update embedded URL: ", MAP_TOOL_URL + geoids.join(","))
+            setMapURL(MAP_TOOL_URL + geoids.join(","));
+        }
+
+        setIsLoading(false);
     }
 
-    async function mapPlaceSelection(recordPromise) {
-        const geoids = (geoType === "County") ?
-            []:
+    async function mapCountySelection(recordPromise, geoIdUpdate) {
+        const geoids = (geoType === "Place") ?
+            [] : (!!geoIdUpdate) ? values(geoIdUpdate) :
             values(geoIDs);
-        setGeoType('Place');
+        setGeoType('County');
         const temp = {};
         const records = (!!recordPromise) ?
             (await recordPromise).records :
-            placeRecords;
+            selectedCountyRecords;
 
-        // console.log("Selected Places fields", placeFields);
-        // console.log("Selected Places records", placeRecords);
+        // console.log("Selected Counties fields", selectedCountyFields);
+        // console.log("Selected Counties records", selectedCountyRecords);
 
-        let total = 0; setTotalSelectedRecords(total);
+        let total = (!!geoids && geoids !== null) ? geoids.length : 0;
+        setTotalSelectedRecords(total);
 
-        console.log(records);
+        setIsLoading(true);
 
-        for (const record of placeRecords) {
-            console.log(record);
-            // work with the data in the query result
-            // console.log("Records in Selected Counties (" + (++idx) + "): ", record);
-            // for (const p in record) {
-            //     if (p in record && typeof record[p] === 'function') {
-            //         // console.log(p + "()");
-            //     }
-            // }
-            for (const f of placeFields) {
-                // console.log(f.name, record.getCellValue(f));
+        for (const record of records) {
+            for (const f of selectedCountyFields) {
                 if (record.getCellValue(f) !== null) {
-                    if (f.name.match(/GEOID$/) !== null) {
+                    if (f.name.match(/Geoid/i) !== null) {
+                        // console.log(f.name, record.getCellValue(f));
                         const geoid = record.getCellValue(f)[0].value;
                         if (geoids.filter(id => geoid === id).length < 1) {
                             geoids.push(geoid);
                             temp[record.id] = geoid;
-                            console.log("Add " + geoid, temp);
+                            // console.log("Add " + geoid, temp);
                             setGeoIDs(temp);
                             setTotalSelectedRecords(++total);
-                            console.log(total);
+                            // console.log(total);
                         }
                     }
                 }
@@ -238,8 +181,62 @@ function App() {
             records.unloadData();
         }
 
-        console.log("Update embedded URL: ", MAP_TOOL_URL + geoids.join(","))
-        setMapURL(MAP_TOOL_URL + geoids.join(","));
+        if (total <= MAX_RECORDS_TO_MAP) {
+            console.log("Update embedded URL: ", MAP_TOOL_URL + geoids.join(","))
+            setMapURL(MAP_TOOL_URL + geoids.join(","));
+        }
+
+        setIsLoading(false);
+    }
+
+    async function mapPlaceSelection(recordPromise, geoIdUpdate) {
+        const geoids = (geoType === "County") ?
+            [] : (!!geoIdUpdate) ? values(geoIdUpdate) :
+            values(geoIDs);
+        setGeoType('Place');
+        const temp = {};
+        const records = (!!recordPromise) ?
+            (await recordPromise).records :
+            placeRecords;
+
+        // console.log("Selected Places fields", placeFields);
+        // console.log("Selected Places records", placeRecords);
+
+        let total = (!!geoids && geoids !== null) ? geoids.length : 0;
+        setTotalSelectedRecords(total);
+
+        setIsLoading(true);
+
+        for (const record of placeRecords) {
+
+            for (const f of placeFields) {
+                if (record.getCellValue(f) !== null) {
+                    if (f.name.match(/GEOID$/) !== null) {
+                        // console.log(f.name, record.getCellValue(f));
+                        const geoid = record.getCellValue(f)[0].value;
+                        if (geoids.filter(id => geoid === id).length < 1) {
+                            geoids.push(geoid);
+                            temp[record.id] = geoid;
+                            // console.log("Add " + geoid, temp);
+                            setGeoIDs(temp);
+                            setTotalSelectedRecords(++total);
+                            // console.log(total);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (typeof records.unloadData === 'function') {
+            records.unloadData();
+        }
+
+        if (total <= MAX_RECORDS_TO_MAP) {
+            console.log("Update embedded URL: ", MAP_TOOL_URL + geoids.join(","))
+            setMapURL(MAP_TOOL_URL + geoids.join(","));
+        }
+
+        setIsLoading(false);
     }
 
     useEffect(() => {
@@ -303,6 +300,7 @@ function App() {
 
         activeTable = base.getTableByIdIfExists(cursor.activeTableId);
         console.log("Active Table: " + activeTable.name, activeTable );
+
         for (const view of activeTable.views) {
             if (view.id === cursor.activeViewId) {
                 if (activeTable.name === COUNTY_TABLE) {
@@ -321,25 +319,39 @@ function App() {
         if (activeView !== null) {
             console.log("View: " + activeView.name);
             console.log("Active: " + (activeView.id === cursor.activeViewId));
+            console.log("VIEW CHANGE!");
 
             if (activeTable.name === COUNTY_TABLE) {
-                mapCounties(activeView.selectRecordsAsync());
+
+                setIsLoading(true);
+                mapCounties(activeView.selectRecordsAsync(), {});
 
             } else if (activeTable.name === SELECTED_COUNTIES_TABLE) {
-                mapCountySelection(activeView.selectRecordsAsync());
+
+                setIsLoading(true);
+                mapCountySelection(activeView.selectRecordsAsync(), {});
 
             } else if (activeTable.name === SELECTED_PLACES_TABLE) {
-                mapPlaceSelection(activeView.selectRecordsAsync());
+
+                setIsLoading(true);
+                mapPlaceSelection(activeView.selectRecordsAsync(), {});
 
             }
+
         } else {
             if (activeTable.name === COUNTY_TABLE) {
+
+                setIsLoading(true);
                 mapCounties();
 
             } if (activeTable.name === SELECTED_COUNTIES_TABLE) {
+
+                setIsLoading(true);
                 mapCountySelection();
 
             } else if (activeTable.name === SELECTED_PLACES_TABLE) {
+
+                setIsLoading(true);
                 mapPlaceSelection();
 
             } else {
@@ -372,7 +384,8 @@ function App() {
             console.log("key", key);
             console.log("details", details);
 
-            let total = 0; setTotalSelectedRecords(total);
+            let total = 0;
+            setTotalSelectedRecords(total);
 
             const recordState = (details.hasOwnProperty("recordIds"))?
                 "recordIds" :
@@ -420,8 +433,10 @@ function App() {
                 }
             }
 
-            console.log("Update embedded URL: ", MAP_TOOL_URL + values(geoIDs).join(","))
-            setMapURL(MAP_TOOL_URL + values(geoIDs).join(","));
+            if (total <= MAX_RECORDS_TO_MAP) {
+                console.log("Update embedded URL: ", MAP_TOOL_URL + values(geoIDs).join(","))
+                setMapURL(MAP_TOOL_URL + values(geoIDs).join(","));
+            }
 
             return setUpdateDetails(
                 `${(recordState !== null)? details[recordState].length : 0} records(s) updated at ${Date.now()}`
@@ -456,7 +471,8 @@ function App() {
                     "removedRecordIds" :
                     null;
 
-            let total = 0; setTotalSelectedRecords(total);
+            let total = 0;
+            setTotalSelectedRecords(total);
 
             if (recordState !== null) {
                 let idx = 0;
@@ -481,7 +497,7 @@ function App() {
                                         console.log("Add " + geoid, temp);
                                         setGeoIDs(temp);
                                         setTotalSelectedRecords(++total);
-                            console.log(total);
+                                        console.log(total);
                                         console.log("GEOIDS: ", geoIDs);
                                     }
                                 }
@@ -496,8 +512,10 @@ function App() {
                 }
             }
 
-            console.log("Update embedded URL: ", MAP_TOOL_URL + values(geoIDs).join(","))
-            setMapURL(MAP_TOOL_URL + values(geoIDs).join(","));
+            if (total <= MAX_RECORDS_TO_MAP) {
+                console.log("Update embedded URL: ", MAP_TOOL_URL + values(geoIDs).join(","))
+                setMapURL(MAP_TOOL_URL + values(geoIDs).join(","));
+            }
 
             return setUpdateDetails(
                 `${(recordState !== null)? details[recordState].length : 0} records(s) updated at ${Date.now()}`
@@ -524,7 +542,8 @@ function App() {
             console.log("key", key);
             console.log("details", details);
 
-            let total = 0; setTotalSelectedRecords(total);
+            let total = 0;
+            setTotalSelectedRecords(total);
 
             const recordState = (details.hasOwnProperty("recordIds"))?
                 "recordIds" :
@@ -572,8 +591,10 @@ function App() {
                 }
             }
 
-            console.log("Update embedded URL: ", MAP_TOOL_URL + values(geoIDs).join(","))
-            setMapURL(MAP_TOOL_URL + values(geoIDs).join(","));
+            // if (total <= MAX_RECORDS_TO_MAP) {
+            //     console.log("Update embedded URL: ", MAP_TOOL_URL + values(geoIDs).join(","))
+            //     setMapURL(MAP_TOOL_URL + values(geoIDs).join(","));
+            // }
 
             return setUpdateDetails(
                 `${(recordState !== null)? details[recordState].length : 0} records(s) updated at ${Date.now()}`
@@ -594,6 +615,11 @@ function App() {
             const table = (model._cursorData.hasOwnProperty('activeTableId'))?
                 base.getTableById(model._cursorData['activeTableId']) :
                 null;
+
+            let total = (!!geoids && geoids !== null) ? geoids.length : 0;
+            setTotalSelectedRecords(total);
+
+            setIsLoading(true);
 
             if (table.name === COUNTY_TABLE) {
 
@@ -621,6 +647,8 @@ function App() {
                                                 const geoid = record.getCellValue(f)[0].value || record.getCellValue(f);
                                                 if (geoids.filter(id => id === geoid).length < 1) {
                                                     geoids.push(geoid);
+                                                    setTotalSelectedRecords(++total);
+                                                    console.log(total);
                                                     console.log("Select only " + geoid);
                                                 }
                                             }
@@ -659,6 +687,8 @@ function App() {
                                                 const geoid = record.getCellValue(f)[0].value;
                                                 if (geoids.filter(id => id === geoid).length < 1) {
                                                     geoids.push(geoid);
+                                                    setTotalSelectedRecords(++total);
+                                                    console.log(total);
                                                     console.log("Select only " + geoid);
                                                 }
                                             }
@@ -697,6 +727,8 @@ function App() {
                                                 const geoid = record.getCellValue(f)[0].value;
                                                 if (geoids.filter(id => id === geoid).length < 1) {
                                                     geoids.push(geoid);
+                                                    setTotalSelectedRecords(++total);
+                                                    console.log(total);
                                                     console.log("Select only " + geoid);
                                                 }
                                             }
@@ -711,8 +743,8 @@ function App() {
             }
 
             // Update URL HASH of map tool with selected GEO
-            if (geoids.length > 0) {
-                console.log("Update embedded URL: ", mapURL + "#!selectedGeo=" + values(geoIDs).join(","))
+            if (geoids.length > 0 && total <= 1) {
+                console.log("Select geo in URL: ", mapURL + "#!selectedGeo=" + values(geoIDs).join(","))
                 document.querySelectorAll('iframe').forEach(elm => {
                     console.log("MAP WINDOW: ", typeof elm.contentWindow, elm.contentWindow);
                     elm.contentWindow.postMessage(
@@ -721,6 +753,8 @@ function App() {
                     )
                 });
             }
+
+            setIsLoading(false);
 
             return setSelectionDetails(
                 `${selectedRecordIds.join(', ')}`
@@ -770,11 +804,19 @@ function App() {
 
     // return <div>🦊 Hello world 🚀</div>;
     return (
-        <Box>
+        <Box
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            backgroundColor="white"
+            padding={0}
+            height={500} >
             {/*Active table: {cursor.activeTableId} <br />*/}
             {isSettingsOpen ? (
                 <SettingsForm setIsSettingsOpen={setIsSettingsOpen}/>
-            ) : (totalSelectedRecords > MAX_RECORDS_TO_MAP) ? (
+            ) : (isLoading) ?
+                <Loader scale={0.3}  fillColor={'#777'} /> :
+                (totalSelectedRecords > MAX_RECORDS_TO_MAP) ? (
                     <Fragment>
                         <Text>To map records in the current view, you must filter the view to less than {MAX_RECORDS_TO_MAP} records ({totalSelectedRecords}).</Text>
                     </Fragment>
