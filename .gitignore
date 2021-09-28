@@ -1,6 +1,7 @@
-*.bak
+*.bak*
 *.block
 *.idea
+*.old*
 /.airtableblocksrc.json
 /build
 /node_modules
