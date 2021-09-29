@@ -8,7 +8,17 @@ export const converters = [
         // URL isn't for an Airtable share
         return null;
     },
-    function getBCATPreviewUrl(url) {
+    function getCIMSMapPreviewUrl(url) {
+        const match = url.match(/elasticbeanstalk\.com(\/)?\/([A-Za-z0-9].*)/);
+        if (match) {
+            console.log(url);
+            return `https://cims-eda.us-east-1.elasticbeanstalk.com/${match[2]}`;
+        }
+
+        // URL isn't for an Airtable share
+        return null;
+    },
+    function getTestMapPreviewUrl(url) {
         const match = url.match(/shinyapps\.io(\/)?\/([A-Za-z0-9].*)/);
         if (match) {
             console.log(url);

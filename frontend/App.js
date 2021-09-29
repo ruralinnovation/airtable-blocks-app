@@ -31,10 +31,14 @@ for (const l of links) {
 
 const MAX_RECORDS_TO_MAP = 300;
 
-const MAP_TOOL_DOMAIN = "https://ruralinnovation.shinyapps.io"
-const MAP_TOOL_URL = MAP_TOOL_DOMAIN + "/cims-map-tool/?geoids=";
 // const MAP_TOOL_DOMAIN = "http://127.0.0.1:4321"
 // const MAP_TOOL_URL = MAP_TOOL_DOMAIN + "?geoids=";
+// const MAP_TOOL_DOMAIN = "http://127.0.0.1:8000"
+// const MAP_TOOL_URL = MAP_TOOL_DOMAIN + "/map?geoids=";
+// const MAP_TOOL_DOMAIN = "https://ruralinnovation.shinyapps.io"
+// const MAP_TOOL_URL = MAP_TOOL_DOMAIN + "/cims-map-tool/?geoids=";
+const MAP_TOOL_DOMAIN = "https://cims-eda.us-east-1.elasticbeanstalk.com"
+const MAP_TOOL_URL = MAP_TOOL_DOMAIN + "/map?geoids=";
 
 const COUNTY_TABLE = 'County';
 // const SELECTED_COUNTIES_TABLE = 'Selected Counties';
@@ -746,7 +750,7 @@ function App() {
             if (geoids.length > 0 && total <= 1) {
                 console.log("Select geo in URL: ", mapURL + "#!selectedGeo=" + values(geoIDs).join(","))
                 document.querySelectorAll('iframe').forEach(elm => {
-                    console.log("MAP WINDOW: ", typeof elm.contentWindow, elm.contentWindow);
+                    // DON'T DO THIS! -> // console.log("MAP WINDOW: ", typeof elm.contentWindow, elm.contentWindow);
                     elm.contentWindow.postMessage(
                         "#!selectedGeo=" + geoids.join(","),
                         MAP_TOOL_DOMAIN
