@@ -9,6 +9,16 @@ export const converters = [
         return null;
     },
     function getCIMSMapPreviewUrl(url) {
+        const match = url.match(/ruralinnovation\.us(\/)?\/([A-Za-z0-9].*)/);
+        if (match) {
+            console.log(url);
+            return `https://cims-eda.ruralinnovation.us/${match[2]}`;
+        }
+
+        // URL isn't for an Airtable share
+        return null;
+    },
+    function getEBMapPreviewUrl(url) {
         const match = url.match(/elasticbeanstalk\.com(\/)?\/([A-Za-z0-9].*)/);
         if (match) {
             console.log(url);
@@ -18,7 +28,7 @@ export const converters = [
         // URL isn't for an Airtable share
         return null;
     },
-    function getTestMapPreviewUrl(url) {
+    function getShinyAppsMapPreviewUrl(url) {
         const match = url.match(/shinyapps\.io(\/)?\/([A-Za-z0-9].*)/);
         if (match) {
             console.log(url);

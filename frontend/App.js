@@ -37,7 +37,9 @@ const MAX_RECORDS_TO_MAP = 300;
 // const MAP_TOOL_URL = MAP_TOOL_DOMAIN + "/map?geoids=";
 // const MAP_TOOL_DOMAIN = "https://ruralinnovation.shinyapps.io"
 // const MAP_TOOL_URL = MAP_TOOL_DOMAIN + "/cims-map-tool/?geoids=";
-const MAP_TOOL_DOMAIN = "https://cims-eda.us-east-1.elasticbeanstalk.com"
+// const MAP_TOOL_DOMAIN = "https://cims-eda.us-east-1.elasticbeanstalk.com"
+// const MAP_TOOL_URL = MAP_TOOL_DOMAIN + "/map?geoids=";
+const MAP_TOOL_DOMAIN = "https://cims-eda.ruralinnovation.us"
 const MAP_TOOL_URL = MAP_TOOL_DOMAIN + "/map?geoids=";
 
 const COUNTY_TABLE = 'County';
