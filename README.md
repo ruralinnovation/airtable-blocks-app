@@ -25,7 +25,6 @@ In order to better understand the geographic context of the selected location(s)
 ![](docs/images/image3.png)
 
 <img src="docs/images/image4.png" style="clear: none; max-width: 640px; vertical-align: top;" align="left" /> _CIMS Map Tool filter_ 
-
 _showing an airport and_ 
 _breweries found within_ 
 _25 miles of Española,_ 
