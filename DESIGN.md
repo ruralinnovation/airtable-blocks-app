@@ -8,18 +8,18 @@ MDA Team (John Hall)
 Given the prominence of Airtable as a data management tool within CORI/RISI and our heavy utilization of geographically enriched data, we would like to create a [CIMS Map Tool](https://github.com/ruralinnovation/cims-map-tool/) that can be used within the Airtable web interface. Development and maintenance of this tool should enhance our ability to:
 
 * Explore data
-* Ability to select location(s) that match the following (example) criteria:
-    * Community must be rural
-    * Minimum 75% of pop has access to broadband
-        * Ideally access to *fiber* in downtown core
-    * Partnership with local post-secondary institution
-    * Commitment to building Digital Economy Infrastructure from leadership (of applicant organization)
-* Visualize selected location as filter criteria are updated (map view)
-    * Initialize with useful overview of mapped features (looks good when you first open it)
-    * Drill down on individual features (see attributes)
-    * Responsive loading of data after single initialization cycle
-    * Relatively easy to configure app with appropriate data layers
-    * Click on individual records in Airtable tables and render them on map with a context that is specific to selected record (i.e. if record == place, then map selected place and all county subdivisions, counties, etc. that intersect with place)
+    * Ability to select location(s) that match the following (example) criteria:
+        * Community must be rural
+        * Minimum 75% of pop has access to broadband
+            * Ideally access to *fiber* in downtown core
+        * Partnership with local post-secondary institution
+        * Commitment to building Digital Economy Infrastructure from leadership (of applicant organization)
+    * Visualize selected location as filter criteria are updated (map view)
+        * Initialize with useful overview of mapped features (looks good when you first open it)
+        * Drill down on individual features (see attributes)
+        * Responsive loading of data after single initialization cycle
+        * Relatively easy to configure app with appropriate data layers
+        * Click on individual records in Airtable tables and render them on map with a context that is specific to selected record (i.e. if record == place, then map selected place and all county subdivisions, counties, etc. that intersect with place)
 
 * Publish/Print results
     * From selections made/filtered within map view return a list of features as records to an Airtable table(s)
@@ -36,16 +36,16 @@ A fundamental assumption of this modeling process is that the local organization
 
 * Given an entry point selection of one or more polygons, all which must be of a single geography type, either **CBSA**, **County**, **County Subdivision** or **Place**:
 
- * Filter and subset data selection by geographical context …
-   * Show all features of other geography types which spatially intersect that selection
-   * Also show other types of features (i.e. airports, breweries, colleges, etc.) which either
-     * Spatial intersection with selection
-     * Spatial intersection with a feature of a special type (i.e., 30-minutes drive times)
-
- * Visually validate geographical context of pre-selected data (selected in Airtable)...
-   * Are the individual features of this subset too close together (spatially)?
-   * Are the features of the selection mostly in one or another of the larger regions of the country (i.e. all in the North East or all in the Midwest)?
-   * What is the heterogeneity of the geographics size (by type and by area) of this selection of features?
+    * Filter and subset data selection by geographical context …
+        * Show all features of other geography types which spatially intersect that selection
+        * Also show other types of features (i.e. airports, breweries, colleges, etc.) which either
+            * Spatial intersection with selection
+            * Spatial intersection with a feature of a special type (i.e., 30-minutes drive times)
+    
+    * Visually validate geographical context of pre-selected data (selected in Airtable)...
+        * Are the individual features of this subset too close together (spatially)?
+        * Are the features of the selection mostly in one or another of the larger regions of the country (i.e. all in the North East or all in the Midwest)?
+        * What is the heterogeneity of the geographics size (by type and by area) of this selection of features?
 
 ## Architectural Overview
 
