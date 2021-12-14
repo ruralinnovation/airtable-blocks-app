@@ -1,6 +1,6 @@
 ![cori-risi-header](docs/images/image0.png)
 
-# CIMS: EDA (Airtable) Map Tool
+# (Airtable) CIMS Map Tool
 Welcome to the CIMS map tool, as it is currently deployed on [CIMS: EDA Airtable base](https://airtable.com/app0hTxEwsHVfhmJg/tblGPS8wgl4NU4WmI/viwGHKSFU9TRoTQem?blocks=hide).
 ![](docs/images/image7.png)
 

@@ -8,21 +8,21 @@ MDA Team (John Hall)
 Given the prominence of Airtable as a data management tool within CORI/RISI and our heavy utilization of geographically enriched data, we would like to create a [CIMS Map Tool](https://github.com/ruralinnovation/cims-map-tool/) that can be used within the Airtable web interface. Development and maintenance of this tool should enhance our ability to:
 
 * Explore data
- * Select location(s) that match the following minimal criteria:
-   * Community must be rural
-   * Minimum 75% of pop has access to broadband
-     * Ideally access to *fiber* in downtown core
-   * Partnership with local post-secondary institution
-   * Commitment to building Digital Economy Infrastructure from leadership (of applicant organization)
- * Visualize selected location as filter criteria are updated (map view)
-   * Initialize with useful overview of mapped features (looks good when you first open it)
-   * Drill down on individual features (see attributes)
-   * Responsive loading of data after single initialization cycle
-   * Relatively easy to configure app with appropriate data layers
-   * Click on individual records in Airtable tables and render them on map with a context that is specific to selected record (i.e. if record == place, then map selected place and all county subdivisions, counties, etc. that intersect with place)
+* Ability to select location(s) that match the following (example) criteria:
+    * Community must be rural
+    * Minimum 75% of pop has access to broadband
+        * Ideally access to *fiber* in downtown core
+    * Partnership with local post-secondary institution
+    * Commitment to building Digital Economy Infrastructure from leadership (of applicant organization)
+* Visualize selected location as filter criteria are updated (map view)
+    * Initialize with useful overview of mapped features (looks good when you first open it)
+    * Drill down on individual features (see attributes)
+    * Responsive loading of data after single initialization cycle
+    * Relatively easy to configure app with appropriate data layers
+    * Click on individual records in Airtable tables and render them on map with a context that is specific to selected record (i.e. if record == place, then map selected place and all county subdivisions, counties, etc. that intersect with place)
 
 * Publish/Print results
- * From selections made/filtered within map view return a list of features as records to an Airtable table(s)
+    * From selections made/filtered within map view return a list of features as records to an Airtable table(s)
 
 ## Design Considerations
 
@@ -30,7 +30,7 @@ Given the prominence of Airtable as a data management tool within CORI/RISI and 
 
 The collection of lists and tables that make up CIMS are the basis for our process of modeling a certain kind of ecosystem development with the aim of understanding the factors that contribute to the growth and success of enterprises that support _digital_ jobs and operate in _rural_ locations (with the understanding that "rural" has multiple, context-dependent definitions). One (among many) of the measures that we use to test these models is the ability of a community (i.e. place or micro-region) to produce a recipient of the ["Build to Scale" Venture Challenge](https://eda.gov/oie/buildtoscale/venture/) (formerly "i6 Challenge") award which is a program run by the Office of Innovation and Entrepreneurship (OIE; operating within EDA). We have written a [retrospective report](https://docs.google.com/document/d/1jjSVh75pdSrd7ZqsJ_m1sCdxZZvI2oLD1YxhmqR4HHU) based on our experience in supporting applicants, during both the application process and continuing education/training intended to optimize an organization's ability to discover and utilize local Digital Economy Ecosystem resources.
 
-A fundamental assumption of this modeling process is that the local organizations and entities that are best positioned to receive and capitalize on these awards are most likely to be found in locations where specific components that make up a Digital Economy Ecosystem are already present and developed to a certain level of maturity. This assumption is also the basis for producing a Digital Economy Diagnostic report. The Airtable deployment of this application is intended to allow the researcher to discover and/or verify assets by geospatial proximity to the locus of a given a community and/or communities by geospatial proximity to specific assets, with the Airtable interfaces serving as a method to provide input parameters to the mapping function.
+A fundamental assumption of this modeling process is that the local organizations and entities that are best positioned to receive and capitalize on these awards are most likely to be found in locations where specific components that make up a Digital Economy Ecosystem are already present and developed to a certain level of maturity. This assumption is also the basis for producing a [Digital Economy Diagnostic report](https://github.com/ruralinnovation/dee-r). The Airtable deployment of this application is intended to allow the researcher to discover and/or verify assets by geospatial proximity to the locus of a given a community and/or communities by geospatial proximity to specific assets, with the Airtable interfaces serving as a method to provide input parameters to the mapping function.
 
 ### Use-cases
 
