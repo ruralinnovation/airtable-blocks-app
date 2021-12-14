@@ -37,6 +37,16 @@ const MAX_RECORDS_TO_MAP = 300;
 // const MAP_TOOL_URL = MAP_TOOL_DOMAIN + "?geoids=";
 // const MAP_TOOL_DOMAIN = "http://127.0.0.1:8000"
 // const MAP_TOOL_URL = MAP_TOOL_DOMAIN + "/map?geoids=";
+// const MAP_TOOL_DOMAIN = "http://localhost:8088"
+// const MAP_TOOL_URL = MAP_TOOL_DOMAIN + "/p/831db30c/?geoids=";
+// const MAP_TOOL_DOMAIN = "http://18.235.239.47:4321"
+// const MAP_TOOL_URL = MAP_TOOL_DOMAIN + "?geoids=";
+// const MAP_TOOL_DOMAIN = "http://18.235.239.47:8000"
+// const MAP_TOOL_URL = MAP_TOOL_DOMAIN + "/map?geoids=";
+// const MAP_TOOL_DOMAIN = "http://18.235.239.47:8088"
+// const MAP_TOOL_URL = MAP_TOOL_DOMAIN + "/map?geoids=";
+// const MAP_TOOL_DOMAIN = "http://18.235.239.47:4321"
+// const MAP_TOOL_URL = MAP_TOOL_DOMAIN + "/map?geoids=";
 // const MAP_TOOL_DOMAIN = "https://ruralinnovation.shinyapps.io"
 // const MAP_TOOL_URL = MAP_TOOL_DOMAIN + "/cims-map-tool/?geoids=";
 // const MAP_TOOL_DOMAIN = "https://cims-eda.us-east-1.elasticbeanstalk.com"
@@ -878,9 +888,4 @@ function values(object) {
     for (const p in object) {
         if (object.hasOwnProperty(p) && typeof object[p] !== "function") {
             vals.push(object[p])
-        }
-    }
-    return vals;
-}
-
-export default App;
+        
